@@ -3,6 +3,7 @@
 Recommended validation on a licensed JMAG 18.1 machine:
 
 1. Run `scripts/jmag/status.ps1`.
+2. Run `scripts/jmag/com-probe.ps1`.
 2. Register MCP with Codex.
 3. Ask for `jmag_environment_status`.
 4. Generate `current_study_report`.
