@@ -1,0 +1,16 @@
+{
+  "name": "jmag-designer-agentic-toolkit",
+  "version": "0.1.0",
+  "description": "Agentic MCP toolkit for JMAG Designer scripting, run planning, and exported result analysis.",
+  "mcpServers": {
+    "jmag-designer-agentic-toolkit": {
+      "command": "dotnet",
+      "args": [
+        "src/JmagDesignerAgenticToolkit.McpServer/bin/Debug/net8.0/JmagDesignerAgenticToolkit.McpServer.dll"
+      ]
+    }
+  },
+  "skills": [
+    "skills-catalog/jmag-core/jmag-scripting"
+  ]
+}
