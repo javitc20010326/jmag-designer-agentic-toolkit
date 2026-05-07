@@ -71,6 +71,8 @@ internal sealed class McpServer(JmagToolkit jmag)
         {
             "jmag_capabilities" => jmag.GetCapabilities(),
             "jmag_environment_status" => jmag.GetEnvironmentStatus(),
+            "jmag_com_status" => jmag.GetComStatus(),
+            "jmag_run_script_via_com" => jmag.RunScriptViaCom(ReadString(args, "scriptPath"), ReadNullableBool(args, "visible") ?? false, ReadNullableInt(args, "waitSeconds") ?? 2, ReadNullableString(args, "progId")),
             "jmag_analyze_project_folder" => jmag.AnalyzeProjectFolder(ReadString(args, "folderPath"), ReadNullableInt(args, "maxFiles") ?? 300),
             "jmag_analyze_csv_results" => jmag.AnalyzeCsvResults(ReadString(args, "filePath"), ReadNullableInt(args, "maxRows") ?? 20),
             "jmag_generate_script" => jmag.GenerateScript(ReadString(args, "outputFolder"), ReadString(args, "scriptKind"), ReadNullableString(args, "projectPath"), ReadNullableString(args, "outputPath"), ReadNullableString(args, "studyName")),
@@ -115,6 +117,22 @@ internal sealed class McpServer(JmagToolkit jmag)
 
         var text = value.GetValue<string>();
         return string.IsNullOrWhiteSpace(text) ? null : text;
+    }
+
+    private static bool? ReadNullableBool(JsonObject args, string name)
+    {
+        if (!args.TryGetPropertyValue(name, out var value) || value is null)
+        {
+            return null;
+        }
+
+        return value.GetValueKind() switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.String when bool.TryParse(value.GetValue<string>(), out var result) => result,
+            _ => null
+        };
     }
 
     private static string ReadString(JsonObject args, string name)
@@ -231,6 +249,26 @@ internal static class ToolDefinitions
         },
         new
         {
+            name = "jmag_com_status",
+            title = "JMAG COM status",
+            description = "Check whether JMAG Designer COM automation ProgIDs are registered on this Windows machine.",
+            inputSchema = EmptySchema()
+        },
+        new
+        {
+            name = "jmag_run_script_via_com",
+            title = "Run JMAG script via COM",
+            description = "Run a Python/VB/JScript file through JMAG Designer COM automation. Use only reviewed scripts and copied projects.",
+            inputSchema = Obj(new
+            {
+                scriptPath = Str("Script file path to run through JMAG Designer."),
+                visible = Bool("Whether to make JMAG visible while running."),
+                waitSeconds = Int("Seconds to wait before reading JMAG status. Default 2."),
+                progId = Str("Optional COM ProgID. Defaults to designer.Application.181.")
+            }, ["scriptPath"])
+        },
+        new
+        {
             name = "jmag_analyze_project_folder",
             title = "Analyze JMAG folder",
             description = "Scan a folder containing copied JMAG projects, scripts, logs, exports, or CSV results and summarize useful automation signals.",
@@ -298,4 +336,6 @@ internal static class ToolDefinitions
     private static object Str(string description) => new { type = "string", description };
 
     private static object Int(string description) => new { type = "integer", description };
+
+    private static object Bool(string description) => new { type = "boolean", description };
 }
