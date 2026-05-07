@@ -14,16 +14,36 @@ Get-Process |
 
 Write-Output ""
 Write-Output "=== Executable candidates ==="
-$roots = @(
-    $env:JMAG_HOME,
-    "C:\Program Files",
-    "C:\Program Files (x86)"
-) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+$roots = @()
+if ($env:JMAG_HOME -and (Test-Path -LiteralPath $env:JMAG_HOME)) {
+    $roots += $env:JMAG_HOME
+}
+foreach ($base in @("C:\Program Files", "C:\Program Files (x86)")) {
+    if (Test-Path -LiteralPath $base) {
+        $roots += Get-ChildItem -LiteralPath $base -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^JMAG|JSOL|JMAG-Designer' } |
+            ForEach-Object { $_.FullName }
+    }
+}
 
 foreach ($root in $roots) {
     Get-ChildItem -LiteralPath $root -Recurse -File -Include "designer.exe","scheduler.exe","jmag*.exe" -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -match 'JMAG|JSOL|Designer' } |
         Select-Object -First 80 -ExpandProperty FullName
+}
+
+Write-Output ""
+Write-Output "=== COM automation ==="
+foreach ($progId in @("designer.Application.181", "designer.Application", "DesignerStarter.InstanceManager.181", "DesignerStarter.InstanceManager")) {
+    try {
+        $type = [type]::GetTypeFromProgID($progId)
+        if ($type) {
+            Write-Output "$progId registered"
+        } else {
+            Write-Output "$progId not registered"
+        }
+    } catch {
+        Write-Output "$progId error: $($_.Exception.Message)"
+    }
 }
 
 Write-Output ""
