@@ -1,0 +1,4 @@
+case,torque_nm,copper_loss_w,iron_loss_w,efficiency_pct
+baseline,12.4,84.0,21.5,91.2
+case_001,12.8,86.5,22.1,91.0
+case_002,13.1,89.2,23.0,90.7
