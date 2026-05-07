@@ -4,7 +4,7 @@
 
 Use this when the machine has JMAG Designer, a valid license, and script execution works. Codex can generate scripts, ask you to run them, inspect output files, then iterate.
 
-If external Python automation is configured, the agent may be able to launch non-GUI scripts directly.
+On Windows, the preferred route is COM automation using `designer.Application.181` and `RunScriptFile`. If external Python automation is configured, the agent may also be able to launch non-GUI scripts directly.
 
 ## Semi-agentic
 
