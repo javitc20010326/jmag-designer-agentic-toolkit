@@ -1,0 +1,35 @@
+bin/
+obj/
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Archives and documents often contain private project material.
+*.zip
+*.rar
+*.7z
+*.pdf
+*.xlsx
+*.xls
+*.xlsm
+
+# JMAG project/result artifacts are intentionally local-only.
+*.jproj
+*.jmag
+*.jcf
+*.jdata
+*.jplot
+*.jmesh
+*.jresult
+*.jdc
+
+exports/
+results/
+private/
+scratch/
+user-projects/
+licensed-projects/
+
+jmag-designer-agentic-toolkit-source.zip
