@@ -1,0 +1,6 @@
+{
+  "name": "jmag-designer-agentic-toolkit",
+  "displayName": "JMAG Designer Agentic Toolkit",
+  "description": "MCP and skills for automating JMAG Designer with scripts and analyzing exported results.",
+  "version": "0.1.0"
+}
