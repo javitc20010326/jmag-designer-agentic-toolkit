@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -65,6 +67,7 @@ public sealed class JmagToolkit
         return new
         {
             isJmagLikelyInstalled = executables.Length > 0,
+            comAutomation = GetComStatus(),
             environment = new
             {
                 JMAG_DESIGNER_EXE = Environment.GetEnvironmentVariable("JMAG_DESIGNER_EXE"),
@@ -75,6 +78,74 @@ public sealed class JmagToolkit
             nextStep = executables.Length == 0
                 ? "Set JMAG_DESIGNER_EXE to the Designer executable path or run scripts/jmag/status.ps1 on the licensed machine."
                 : "Use jmag_generate_script, then run it from JMAG Designer or scripts/jmag/run-script.ps1."
+        };
+    }
+
+    public object GetComStatus()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return new { supported = false, reason = "COM automation is Windows-only." };
+        }
+
+        var progIds = new[] { "designer.Application.181", "designer.Application", "DesignerStarter.InstanceManager.181", "DesignerStarter.InstanceManager" };
+#pragma warning disable CA1416
+        var available = progIds
+            .Select(progId => new { progId, registered = IsComProgIdRegistered(progId) })
+            .ToArray();
+#pragma warning restore CA1416
+
+        return new
+        {
+            supported = true,
+            available,
+            recommendedProgId = available.FirstOrDefault(x => x.registered && x.progId.StartsWith("designer.Application", StringComparison.OrdinalIgnoreCase))?.progId
+        };
+    }
+
+    public object RunScriptViaCom(string scriptPath, bool visible = false, int waitSeconds = 2, string? progId = null)
+    {
+        var script = RequireExistingFile(scriptPath);
+        if (!OperatingSystem.IsWindows())
+        {
+            return new { error = "COM automation is Windows-only." };
+        }
+
+        var selectedProgId = string.IsNullOrWhiteSpace(progId) ? "designer.Application.181" : progId;
+        var type = Type.GetTypeFromProgID(selectedProgId, throwOnError: false) ??
+                   Type.GetTypeFromProgID("designer.Application", throwOnError: false);
+
+        if (type is null)
+        {
+            return new
+            {
+                error = "JMAG Designer COM ProgID is not registered.",
+                hint = "Run JMAG's VBLink.bat as administrator if COM registration is missing."
+            };
+        }
+
+        object app = Activator.CreateInstance(type)!;
+        TryInvoke(type, app, "SetVisible", visible);
+        TryInvoke(type, app, "RunScriptFile", script.FullName);
+        Thread.Sleep(TimeSpan.FromSeconds(Math.Clamp(waitSeconds, 0, 120)));
+
+        return new
+        {
+            progId = selectedProgId,
+            script = script.FullName,
+            isValid = TryInvoke(type, app, "IsValid"),
+            visible = TryInvoke(type, app, "visible"),
+            projectName = TryInvoke(type, app, "GetProjectName"),
+            projectPath = TryInvoke(type, app, "GetProjectPath"),
+            projectFolder = TryInvoke(type, app, "GetProjectFolderPath"),
+            numModels = TryInvoke(type, app, "NumModels"),
+            numStudies = TryInvoke(type, app, "NumStudies"),
+            majorVersion = TryInvoke(type, app, "MajorVersion"),
+            minorVersion = TryInvoke(type, app, "MinorVersion"),
+            subVersion = TryInvoke(type, app, "SubVersion"),
+            mainWindowTitle = TryInvoke(type, app, "MainWindowTitle"),
+            hasError = TryInvoke(type, app, "HasError"),
+            lastMessage = TryInvoke(type, app, "GetLastMessage")
         };
     }
 
@@ -529,4 +600,20 @@ public sealed class JmagToolkit
     }
 
     private static string Truncate(string value, int max) => value.Length <= max ? value : value[..max] + "...";
+
+    private static object? TryInvoke(Type type, object instance, string name, params object?[] args)
+    {
+        try
+        {
+            return type.InvokeMember(name, BindingFlags.InvokeMethod, null, instance, args);
+        }
+        catch (Exception ex)
+        {
+            return "ERROR: " + (ex.InnerException?.Message ?? ex.Message);
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static bool IsComProgIdRegistered(string progId) =>
+        Type.GetTypeFromProgID(progId, throwOnError: false) is not null;
 }
