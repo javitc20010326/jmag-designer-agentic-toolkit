@@ -26,6 +26,8 @@ Useful references:
 
 - `jmag_capabilities`
 - `jmag_environment_status`
+- `jmag_com_status`
+- `jmag_run_script_via_com`
 - `jmag_analyze_project_folder`
 - `jmag_analyze_csv_results`
 - `jmag_generate_script`
@@ -37,12 +39,15 @@ Useful references:
 .\scripts\build.ps1
 .\scripts\install-codex.ps1
 .\scripts\jmag\status.ps1
+.\scripts\jmag\com-probe.ps1
 ```
 
 Then restart Codex and ask for JMAG tasks, for example:
 
 - "Check whether JMAG is detected."
+- "Check JMAG COM automation status."
 - "Generate a JMAG script to run all unsolved studies on a copied project."
+- "Run this reviewed JMAG script via COM on a copied project."
 - "Analyze this folder of JMAG CSV exports."
 - "Create a parameter sweep skeleton for rotor/stator dimensions."
 - "Generate a run plan for optimizing torque ripple."
